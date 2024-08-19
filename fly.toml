@@ -1,9 +1,9 @@
-# fly.toml app configuration file generated for wsa-utopia-discord-bot-ai-agent-cold-surf-3468 on 2024-08-19T19:46:31+08:00
+# fly.toml app configuration file generated for wsa-utopia-discord-bot-ai-agent on 2024-08-19T21:08:12+08:00
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'wsa-utopia-discord-bot-ai-agent-cold-surf-3468'
+app = 'wsa-utopia-discord-bot-ai-agent'
 primary_region = 'hkg'
 
 [build]
@@ -16,11 +16,12 @@ primary_region = 'hkg'
   min_machines_running = 0
   processes = ['app']
 
+[[services]]
+  protocol = ''
+  internal_port = 0
+  ports = []
+
 [[vm]]
   memory = '1gb'
   cpu_kind = 'shared'
   cpus = 1
-
-[services]
-  [services.app]
-    autostart = true
