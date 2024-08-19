@@ -10,6 +10,10 @@ app = FastAPI(title=settings.PROJECT_NAME)
 async def root():
     return {"message": "Welcome to the Speech API"}
 
+@app.get("/healthcheck")
+async def healthcheck():
+    return {"status": "ok"}
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
