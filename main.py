@@ -1,33 +1,27 @@
-import asyncio
-import os
-
-import discord
-import uvicorn
-from discord.ext import commands
 from dotenv import load_dotenv
+import asyncio
+import uvicorn
 from fastapi import FastAPI
+import commons.discord_api.discord_api as discord_api
 from speech.app.api.endpoints import router as speech_router
 
 load_dotenv()
-bot_token = os.getenv('DISCORD_BOT_TOKEN')
-intents = discord.Intents.default()
-intents.message_content = True
-bot = commands.Bot(command_prefix=">", intents=intents)
+__discord_app, bot_token = discord_api.init_bot()
 
 
-@bot.event
+@__discord_app.event
 async def on_ready():
-    print(f'Logged in as {bot.user.name}')
-    print(f'Bot ID: {bot.user.id}')
+    print(f'Logged in as {__discord_app.user.name}')
+    print(f'Bot ID: {__discord_app.user.id}')
     print('------')
 
 
-@bot.event
+@__discord_app.event
 async def on_message(message):
     print(message)
 
 
-@bot.command(name="hello")
+@__discord_app.command(name="hello")
 async def hello(ctx):
     await ctx.send('Hello, World!')
 
@@ -39,7 +33,7 @@ app.include_router(speech_router, prefix="/api")
 
 
 async def start_discord_bot():
-    await bot.start(bot_token)
+    await __discord_app.start(bot_token)
 
 
 async def start_server():
