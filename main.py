@@ -1,9 +1,14 @@
-from dotenv import load_dotenv
 import asyncio
+
 import uvicorn
+from dotenv import load_dotenv
 from fastapi import FastAPI
+
 import commons.discord_api.discord_api as discord_api
 from speech.app.api.endpoints import router as speech_router
+from speech.app.services.discord.ReviewSpeechApplicationHandler import get_review_speech_application_handler
+from speech.app.services.discord.SpeechApplicationReviewResultHandler import \
+    get_speech_application_review_result_handler
 
 load_dotenv()
 __discord_app, bot_token = discord_api.init_bot()
@@ -29,7 +34,7 @@ async def hello(ctx):
 middleware = [
 ]
 app = FastAPI(middleware=middleware)
-app.include_router(speech_router, prefix="/api")
+app.include_router(speech_router, prefix="/api/speeches")
 
 
 async def start_discord_bot():
