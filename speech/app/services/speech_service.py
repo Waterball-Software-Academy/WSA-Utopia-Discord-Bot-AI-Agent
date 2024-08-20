@@ -5,9 +5,13 @@ from fastapi import Depends
 from pydantic import BaseModel
 
 import commons.discord_api.discord_api as discord_api
+from commons.events.dependency import EventBusDependency
+from commons.events.event_bus import EventBus
 from speech.app.data.speech_repo import Dependency as SpeechRepoDependency, SpeechApplicationRepository
-from speech.app.services.WsaModDiscordSpeechHandler import Dependency as WsaModDiscordSpeechHandlerDependency, \
-    WsaModDiscordSpeechHandler
+from speech.app.events import NEW_SPEECH_APPLIED
+from speech.app.services.discord.ReviewSpeechApplicationHandler import \
+    Dependency as WsaModDiscordSpeechHandlerDependency, \
+    ReviewSpeechApplicationHandler
 from speech.app.entities.speech_application import SpeechApplication
 from speech.app.services.basic_openai_agent import OpenAIModelClient, OpenAIClientDependency
 
@@ -40,11 +44,12 @@ class SpeechApplicationResponse(BaseModel):
 
 
 class SpeechService:
-    def __init__(self, discord_app: discord.Bot,
+    def __init__(self, event_bus: EventBus, discord_app: discord.Bot,
                  wsa: discord.Guild,
                  speech_application_repo: SpeechApplicationRepository,
                  openai_agent: OpenAIModelClient,
-                 wsa_mod_discord_speech_handler: WsaModDiscordSpeechHandler):
+                 wsa_mod_discord_speech_handler: ReviewSpeechApplicationHandler):
+        self.__event_bus = event_bus
         self.__discord_app = discord_app
         self.__wsa = wsa
         self.__speech_application_repo = speech_application_repo
@@ -71,7 +76,7 @@ class SpeechService:
                                         request.speaker_name, request.description, request.event_start_time,
                                         request.duration_in_mins)
         saved = self.__speech_application_repo.save(application)
-        await self.__wsa_mod_discord_speech_handler.handle_new_speech_application_notification(application)
+        await self.__event_bus.publish(NEW_SPEECH_APPLIED, application=application)
         return SpeechApplicationResponse(
             id=saved._id,
             title=saved.title,
@@ -89,13 +94,14 @@ class SpeechService:
 __instance = None
 
 
-def init_speech_service(discord_app: discord.Bot = discord_api.DiscordAppDependency,
+def init_speech_service(event_bus: EventBus = EventBusDependency,
+                        discord_app: discord.Bot = discord_api.DiscordAppDependency,
                         discord_wsa: discord.Guild = discord_api.WsaGuildDependency,
                         speech_application_repo: SpeechApplicationRepository = SpeechRepoDependency,
                         open_ai_client: OpenAIModelClient = OpenAIClientDependency,
                         wsa_mod_discord_speech_handler=WsaModDiscordSpeechHandlerDependency):
     global __instance
-    __instance = SpeechService(discord_app, discord_wsa, speech_application_repo, open_ai_client,
+    __instance = SpeechService(event_bus, discord_app, discord_wsa, speech_application_repo, open_ai_client,
                                wsa_mod_discord_speech_handler)
     return __instance
 

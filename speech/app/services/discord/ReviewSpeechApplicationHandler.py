@@ -1,20 +1,29 @@
 from datetime import datetime
-from typing import Callable, Awaitable, Optional
+from typing import Optional
 
 import discord
 from fastapi import Depends
 
 from commons.discord_api import discord_api
 from commons.errors import NotFoundException
+from commons.events.event_bus import EventListener
 from speech.app.data.speech_repo import SpeechApplicationRepository
 from speech.app.data.speech_repo import Dependency as SpeechRepoDependency
 from speech.app.entities.speech_application import SpeechApplication, ApplicationReviewStatus
+from speech.app.services.discord.utils import convert_to_minguo_format
 
 
-async def handle_application_review_result_interaction(embed: discord.Embed,
-                                                       interaction: discord.Interaction,
-                                                       updated_title: str, response_message: str,
-                                                       deny_reason: Optional[str] = None):
+async def notify_for_application_review_result(discord: discord.Client, speaker_id: str):
+    speaker = await discord.fetch_user(int(speaker_id))
+
+
+async def _handle_application_review_result(embed: discord.Embed,
+                                            interaction: discord.Interaction,
+                                            speaker_id: str,
+                                            updated_title: str, response_message: str,
+                                            deny_reason: Optional[str] = None):
+    await notify_for_application_review_result(interaction.client, speaker_id)
+    # 2. effect embed message interaction to indicate the result
     embed.title = updated_title
     embed.description = (f"""{embed.description}---
 審查者：<@{interaction.user.id}>
@@ -30,10 +39,11 @@ async def handle_application_review_result_interaction(embed: discord.Embed,
 
 
 class DenyReasonModal(discord.ui.Modal):
-    def __init__(self, speech_id: str, speech_application_repository: SpeechApplicationRepository,
+    def __init__(self, speech_id: str, speaker_id: str, speech_application_repository: SpeechApplicationRepository,
                  embed: discord.Embed):
         super().__init__(title="拒絕申請")
         self.__speech_id = speech_id
+        self.__speaker_id = speaker_id
         self.__speech_application_repository = speech_application_repository
         self.__embed = embed
         self.input_field = discord.ui.InputText(label="請輸入拒絕申請的理由", placeholder="請輸入拒絕申請的理由...")
@@ -45,10 +55,10 @@ class DenyReasonModal(discord.ui.Modal):
             self.__speech_application_repository.update_speech_application_review_status(self.__speech_id,
                                                                                          ApplicationReviewStatus.DENIED,
                                                                                          deny_reason)
-            await handle_application_review_result_interaction(self.__embed, interaction,
-                                                               "🙅 短講申請審查（已拒絕審查）",
-                                                               f"✅ 短講申請 ({self.__speech_id}) 已被拒絕。",
-                                                               deny_reason=deny_reason)
+            await _handle_application_review_result(self.__embed, interaction, self.__speaker_id,
+                                                    "🙅 短講申請審查（已拒絕審查）",
+                                                    f"✅ 短講申請 ({self.__speech_id}) 已被拒絕。",
+                                                    deny_reason=deny_reason)
             print(f"Speech (id={self.__speech_id}) denied.")
         except NotFoundException as e:
             print(e)
@@ -65,13 +75,14 @@ class SpeechApplicationReviewView(discord.ui.View):
     @discord.ui.button(label="通過申請", style=discord.ButtonStyle.success, emoji="🙆")
     async def accept_application(self, button: discord.ui.Button, interaction: discord.Interaction):
         speech_id = button.speech_id
+        speaker_id = button.speaker_id
 
         try:
             self.__speech_application_repository.update_speech_application_review_status(speech_id,
                                                                                          ApplicationReviewStatus.ACCEPTED)
-            await handle_application_review_result_interaction(self.__embed, interaction,
-                                                               "🙆 短講申請審查（已通過審查）",
-                                                               f"✅ 短講申請 ({speech_id}) 已通過審查。")
+            await _handle_application_review_result(self.__embed, interaction, speaker_id,
+                                                    "🙆 短講申請審查（已通過審查）",
+                                                    f"✅ 短講申請 ({speech_id}) 已通過審查。")
             print(f"Speech (id={button.speech_id}) accepted.")
         except NotFoundException as e:
             print(e)
@@ -80,16 +91,17 @@ class SpeechApplicationReviewView(discord.ui.View):
     @discord.ui.button(label="拒絕申請", style=discord.ButtonStyle.primary, emoji="🙅")
     async def deny_application(self, button: discord.ui.Button, interaction: discord.Interaction):
         speech_id = button.speech_id
+        speaker_id = button.speaker_id
         try:
             await interaction.response.send_modal(
-                DenyReasonModal(speech_id, self.__speech_application_repository,
+                DenyReasonModal(speech_id, speaker_id, self.__speech_application_repository,
                                 self.__embed))
         except NotFoundException as e:
             print(e)
             await interaction.respond(f"Error: {str(e)}", ephemeral=True)
 
 
-class WsaModDiscordSpeechHandler:
+class ReviewSpeechApplicationHandler(EventListener):
     def __init__(self, discord_app: discord.Bot,
                  wsa: discord.Guild,
                  speech_repo: SpeechRepoDependency):
@@ -97,7 +109,7 @@ class WsaModDiscordSpeechHandler:
         self.__speech_repo = speech_repo
         self.__discord_app = discord_app
 
-    async def handle_new_speech_application_notification(self, application: SpeechApplication):
+    async def handle_event(self, event_type: str, application: Optional[SpeechApplication] = None, **kwargs):
         # 1. notify the speaker via DM
         dc_speaker = await self.__discord_app.fetch_user(int(application.speaker_discord_id))
         await dc_speaker.send("Hi 你的演講已經申請完畢囉")
@@ -121,22 +133,18 @@ class WsaModDiscordSpeechHandler:
 
         view = SpeechApplicationReviewView(embed, self.__speech_repo)
 
-        # Carry the speech ID so that when handling the button event later, you can identify which speech it is.
+        # Carry relevant data so that when handling the button event later, you can identify the speech, speaker,
+        # ... and so on.
         for item in view.children:
             item.speech_id = application._id
+            item.speaker_id = application.speaker_discord_id
         await channel.send(embed=embed, view=view)
-
-
-def convert_to_minguo_format(timestamp: datetime):
-    minguo_year = timestamp.year - 1911
-
-    return f"民國 {minguo_year} 年 {timestamp.month} 月 {timestamp.day} 日 {timestamp.hour} 點 {timestamp.minute} 分"
 
 
 def get_wsa_mod_discord_speech_handler(discord_app: discord.Bot = discord_api.DiscordAppDependency,
                                        discord_wsa: discord.Guild = discord_api.WsaGuildDependency,
                                        speech_application_repo=SpeechRepoDependency):
-    return WsaModDiscordSpeechHandler(discord_app, discord_wsa, speech_application_repo)
+    return ReviewSpeechApplicationHandler(discord_app, discord_wsa, speech_application_repo)
 
 
 Dependency = Depends(get_wsa_mod_discord_speech_handler)
