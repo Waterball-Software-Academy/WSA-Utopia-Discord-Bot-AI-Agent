@@ -7,6 +7,7 @@ from pydantic import BaseModel
 import commons.discord_api.discord_api as discord_api
 from speech.app.data.speech_repo import Dependency as SpeechRepoDependency, SpeechApplicationRepository
 from speech.app.entities.speech_application import SpeechApplication
+from speech.app.services.basic_openai_agent import OpenAIModelClient, OpenAIClientDependency
 
 
 class PrefilledSpeechApplication(BaseModel):
@@ -36,9 +37,12 @@ class SpeechApplicationResponse(BaseModel):
 
 
 class SpeechService:
-    def __init__(self, wsa: discord.Guild, speech_application_repo: SpeechApplicationRepository):
+    def __init__(self, wsa: discord.Guild,
+                 speech_application_repo: SpeechApplicationRepository,
+                 openai_agent: OpenAIModelClient):
         self.__wsa = wsa
         self.__speech_application_repo = speech_application_repo
+        self.__openai_agent = openai_agent
 
     async def start_speech_application_by_abstract(self, abstract: str,
                                                    speaker_discord_id: int) -> PrefilledSpeechApplication:
@@ -50,8 +54,9 @@ class SpeechService:
         return discord_user.display_name
 
     async def __generate_prefilled_application(self, abstract: str, speaker_name: str) -> PrefilledSpeechApplication:
-        # TODO: generate application by abstract with AI
-        return PrefilledSpeechApplication(title='TODO', description='TODO', speaker_name=speaker_name)
+        event_info = await self.__openai_agent.generate_from_abstract(abstract)
+        return PrefilledSpeechApplication(title=event_info.title, description=event_info.description,
+                                          speaker_name=speaker_name)
 
     async def apply_speech(self, request: SpeechApplicationRequest):
         # TODO: validation?
@@ -65,11 +70,12 @@ class SpeechService:
 __instance = None
 
 
-def init_language_service(discord_wsa: discord.Guild = discord_api.WsaGuildDependency,
-                          speech_application_repo: SpeechApplicationRepository = SpeechRepoDependency):
+def init_speech_service(discord_wsa: discord.Guild = discord_api.WsaGuildDependency,
+                        speech_application_repo: SpeechApplicationRepository = SpeechRepoDependency,
+                        open_ai_client: OpenAIModelClient = OpenAIClientDependency):
     global __instance
-    __instance = SpeechService(discord_wsa, speech_application_repo)
+    __instance = SpeechService(discord_wsa, speech_application_repo, open_ai_client)
     return __instance
 
 
-Dependency = Depends(init_language_service)
+Dependency = Depends(init_speech_service)
