@@ -20,9 +20,7 @@ async def _handle_application_review_result(review_result_handler: SpeechApplica
                                             speaker_id: str, speech_id: str,
                                             updated_title: str, response_message: str,
                                             review_result: ApplicationReviewResult):
-    # 1. issue review result
-    await review_result_handler.handle(speech_id, speaker_id, review_result)
-    # 2. effect embed message interaction to indicate the result
+    # 1. effect embed message interaction to indicate the result
     embed.title = updated_title
     embed.description = (f"""{embed.description}---
 審查者：<@{interaction.user.id}>
@@ -35,6 +33,9 @@ async def _handle_application_review_result(review_result_handler: SpeechApplica
         embed.colour = discord.Color.red()
     await interaction.message.edit(embed=embed, view=None)
     await interaction.respond(response_message, ephemeral=True)
+
+    # 2. issue review result
+    await review_result_handler.handle(speech_id, speaker_id, review_result)
 
 
 class DenyReasonModal(discord.ui.Modal):

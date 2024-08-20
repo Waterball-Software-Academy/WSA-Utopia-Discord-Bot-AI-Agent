@@ -10,6 +10,7 @@ load_dotenv()
 __discord_app = None
 guild_id = os.getenv('GUILD_ID')
 mod_speech_application_review_channel_id = os.getenv('MOD_SPEECH_APPLICATION_REVIEW_CHANNEL_ID')
+speech_voice_channel_id = os.getenv('SPEECH_VOICE_CHANNEL_ID')
 
 
 def init_bot() -> tuple[Bot, str | None]:

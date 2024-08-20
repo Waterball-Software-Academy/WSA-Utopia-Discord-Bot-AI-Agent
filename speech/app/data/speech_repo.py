@@ -34,6 +34,9 @@ class SpeechApplicationRepository:
         if result.modified_count == 0:
             raise NotFoundException("Speech Application", speech_id)
 
+    def find_by_id(self, speech_id: str) -> Optional[SpeechApplication]:
+        return SpeechApplication.from_dict(self.applications.find_one({"_id": ObjectId(speech_id)}))
+
 
 def init_speech_application_repository(db=MongoDatabaseDependency):
     return SpeechApplicationRepository(db)
