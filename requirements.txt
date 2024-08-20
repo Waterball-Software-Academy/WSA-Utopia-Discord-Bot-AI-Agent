@@ -35,3 +35,4 @@ typing_extensions==4.12.2
 urllib3==2.2.2
 uvicorn==0.30.6
 yarl==1.9.4
+py-cord==2.6.0
