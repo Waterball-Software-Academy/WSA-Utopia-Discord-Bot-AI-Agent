@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 
 import commons.discord_api.discord_api as discord_api
+from commons.google.calendar import google_calendar
 from speech.app.api.endpoints import router as speech_router
 from speech.app.services.discord.ReviewSpeechApplicationHandler import get_review_speech_application_handler
 from speech.app.services.discord.SpeechApplicationReviewResultHandler import \
@@ -49,7 +50,9 @@ async def start_server():
 
 
 async def main():
-    await asyncio.gather(start_server(), start_discord_bot())
+    await asyncio.gather(start_server(),
+                         start_discord_bot(),
+                         google_calendar.connect_to_service())
 
 
 if __name__ == "__main__":

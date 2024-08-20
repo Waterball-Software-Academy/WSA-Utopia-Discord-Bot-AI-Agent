@@ -34,10 +34,10 @@ class SpeechApplicationResponse(BaseModel):
     description: str
     speaker_name: str
     speaker_discord_id: str
-    event_start_time: datetime
+    event_start_time: float
     duration_in_mins: int
     application_review_status: str
-    apply_time: datetime
+    apply_time: float
 
 
 class SpeechService:
@@ -77,10 +77,10 @@ class SpeechService:
             description=saved.description,
             speaker_name=saved.speaker_name,
             speaker_discord_id=saved.speaker_discord_id,
-            event_start_time=saved.event_start_time,
+            event_start_time=saved.event_start_time.timestamp(),
             duration_in_mins=saved.duration_in_mins,
             application_review_status=saved.application_review_status,
-            apply_time=saved.apply_time
+            apply_time=saved.apply_time.timestamp()
 
         )
 
