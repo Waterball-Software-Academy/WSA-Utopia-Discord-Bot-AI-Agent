@@ -84,7 +84,6 @@ class SpeechApplicationReviewResultHandler:
         event_result = self.__google_calendar.events().insert(calendarId=calendar_id, body=new_event).execute()
         if event_result["status"] is not 'confirmed':
             print("[Failed] can't create event on google calendar ")
-        print(event_result)  # TODO:check if it failed, should log
 
 
 def get_speech_application_review_result_handler(discord_app: discord.Bot = discord_api.DiscordAppDependency,
