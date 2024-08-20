@@ -1,6 +1,7 @@
 import datetime
 
 import discord
+from discord import ScheduledEvent
 from fastapi import Depends
 
 from commons.discord_api import discord_api
@@ -29,20 +30,24 @@ class SpeechApplicationReviewResultHandler:
             application = self.__speech_repo.find_by_id(speech_id)
             if application is None:
                 raise NotFoundException("Speech Application", application)
-            speech_channel = await self.__wsa.fetch_channel(int(discord_api.speech_voice_channel_id))
-            event = await self.__wsa.create_scheduled_event(
-                name=application.title,
-                description=application.description,
-                start_time=application.event_start_time,
-                end_time=application.event_start_time + datetime.timedelta(minutes=application.duration_in_mins),
-                location=speech_channel,  # You can set a location or leave this as None
-            )
+            event = await self.__schedule_discord_event_for_speech(application)
             mod_speech_application_review_channel = self.__wsa.get_channel(
                 int(discord_api.mod_speech_application_review_channel_id))
             await mod_speech_application_review_channel.send(event.url)
             await dc_speaker.send(event.url)
         else:
             await dc_speaker.send(f"你的短講被拒絕了")
+
+    async def __schedule_discord_event_for_speech(self, application) -> ScheduledEvent:
+        speech_channel = await self.__wsa.fetch_channel(int(discord_api.speech_voice_channel_id))
+        event = await self.__wsa.create_scheduled_event(
+            name=f'{application.title} - By {application.speaker_name}',
+            description=application.description,
+            start_time=application.event_start_time,
+            end_time=application.event_start_time + datetime.timedelta(minutes=application.duration_in_mins),
+            location=speech_channel
+        )
+        return event
 
 
 def get_speech_application_review_result_handler(discord_app: discord.Bot = discord_api.DiscordAppDependency,
