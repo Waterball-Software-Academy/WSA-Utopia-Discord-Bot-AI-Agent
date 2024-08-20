@@ -1,24 +1,25 @@
-import openai
-from typing import Dict
+from pydantic import BaseModel
 
-class BasicOpenAIAgent:
-    def __init__(self, api_key: str, model: str = "gpt-3.5-turbo"):
-        self.api_key = api_key
-        self.model = model
-        openai.api_key = self.api_key
+class EventInfo(BaseModel):
+    title: str
+    description: str
 
-    def process(self, messages: list[Dict[str, str]]) -> str:
-        try:
-            response = openai.ChatCompletion.create(
-                model=self.model,
-                messages=messages
-            )
-            return response.choices[0].message.content.strip()
-        except Exception as e:
-            return f"Error processing input: {str(e)}"
 
-    def change_model(self, new_model: str):
-        self.model = new_model
+class OpenAIModelClient():
+    def __init__(self, api_key: str):
+        from openai import OpenAI
+        self.client = OpenAI(api_key=api_key)
 
-    def simple_query(self, prompt: str) -> str:
-        return self.process([{"role": "user", "content": prompt}])
+    async def generate_from_abstract(self, abstract: str, response_model: type[BaseModel]) -> EventInfo:
+        completion = self.client.beta.chat.completions.parse(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "你是一個優秀的演講行銷人員，根據講者提供的一句關於內容的總結，你能想出讓人無法拒絕的標題(Title)，以及引人入勝的描述(Description)，\
+                內容發想方向包括：一句話總結講者的內容，講者有趣的引言，並且避免生成對進行方式，禁止輸出對受眾的描述\
+                ，並且將結果使用這樣的方式輸出 {\"Title\": 標題內容, \"Description\": 內容描述}"},
+                {"role": "user", "content": abstract},
+            ],
+            response_format=EventInfo,
+        )
+
+        return completion.choices[0].message.parsed

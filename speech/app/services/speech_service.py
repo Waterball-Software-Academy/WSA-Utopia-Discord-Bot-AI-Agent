@@ -3,6 +3,7 @@ from fastapi import Depends
 from pydantic import BaseModel
 
 import commons.discord_api.discord_api as discord_api
+from .basic_openai_agent import OpenAIModelClient
 
 
 class PrefilledSpeechApplication(BaseModel):
@@ -14,6 +15,7 @@ class PrefilledSpeechApplication(BaseModel):
 class SpeechService:
     def __init__(self, wsa: discord.Guild = discord_api.WsaGuildDependency):
         self.__wsa = wsa
+        
 
     async def start_speech_application_by_abstract(self, abstract: str,
                                                    speaker_discord_id: int) -> PrefilledSpeechApplication:
@@ -25,9 +27,9 @@ class SpeechService:
         return discord_user.display_name
 
     async def __generate_prefilled_application(self, abstract: str, speaker_name: str) -> PrefilledSpeechApplication:
-        # TODO: generate application by abstract with AI
-        return PrefilledSpeechApplication(title='TODO', description='TODO', speaker_name=speaker_name)
+        event_info = await OpenAIModelClient.generate_content(abstract)
 
+        return PrefilledSpeechApplication(title=event_info.title, description=event_info.description, speaker_name=speaker_name)
 
 __instance = None
 
