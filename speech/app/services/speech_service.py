@@ -36,6 +36,7 @@ class SpeechApplicationResponse(BaseModel):
     event_start_time: datetime
     duration_in_mins: int
     application_review_status: str
+    apply_time: datetime
 
 
 class SpeechService:
@@ -71,7 +72,18 @@ class SpeechService:
                                         request.duration_in_mins)
         saved = self.__speech_application_repo.save(application)
         await self.__wsa_mod_discord_speech_handler.handle_new_speech_application_notification(application)
-        return saved.to_dict()
+        return SpeechApplicationResponse(
+            id=saved._id,
+            title=saved.title,
+            description=saved.description,
+            speaker_name=saved.speaker_name,
+            speaker_discord_id=saved.speaker_discord_id,
+            event_start_time=saved.event_start_time,
+            duration_in_mins=saved.duration_in_mins,
+            application_review_status=saved.application_review_status,
+            apply_time=saved.apply_time
+
+        )
 
 
 __instance = None

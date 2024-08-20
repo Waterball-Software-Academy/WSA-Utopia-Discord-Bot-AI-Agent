@@ -34,6 +34,7 @@ app.include_router(speech_router, prefix="/api")
 
 async def start_discord_bot():
     await __discord_app.start(bot_token)
+    # TODO: add all pending views to persist their states, otherwise views don't work after the discord bot restarted
 
 
 async def start_server():
