@@ -2,6 +2,8 @@ from typing import Literal
 
 from langgraph.graph import StateGraph, END, MessagesState
 from langchain_core.messages import AIMessage, HumanMessage
+from langgraph.checkpoint.memory import MemorySaver
+
 from langchain.schema import runnable
 
 
@@ -42,11 +44,12 @@ def route_gather(state: AgentState) -> Literal["draft_answer", END]:
 # Define a new graph
 def create_workflow():
     workflow = StateGraph(AgentState, input=MessagesState, output=OutputState, config_schema=GraphConfig)
+    memory = MemorySaver()
     workflow.add_node(draft_answer)
     workflow.add_node(gather_requirements)
     workflow.set_conditional_entry_point(route_start)
     workflow.add_conditional_edges("gather_requirements", route_gather)
     workflow.add_edge("draft_answer", END)
-    graph = workflow.compile()
+    graph = workflow.compile(checkpointer=memory)
     final_chain = runnable.RunnableLambda(inp) | graph
     return final_chain
