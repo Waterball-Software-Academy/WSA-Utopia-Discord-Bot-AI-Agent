@@ -35,7 +35,9 @@ class SpeechApplicationRepository:
             raise NotFoundException("Speech Application", speech_id)
 
     def find_by_id(self, speech_id: str) -> Optional[SpeechApplication]:
-        return SpeechApplication.from_dict(self.applications.find_one({"_id": ObjectId(speech_id)}))
+        speech_application = SpeechApplication.from_dict(self.applications.find_one({"_id": ObjectId(speech_id)}))
+        speech_application._id = str(speech_application._id) # Set _id to prevent json serialization issues
+        return speech_application
 
 
 def init_speech_application_repository(db=MongoDatabaseDependency):

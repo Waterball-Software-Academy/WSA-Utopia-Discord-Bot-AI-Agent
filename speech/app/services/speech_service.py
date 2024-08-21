@@ -83,6 +83,21 @@ class SpeechService:
             apply_time=saved.apply_time.timestamp()
 
         )
+        
+    async def find_speech_application(self, id: str) -> SpeechApplication:
+        # TODO: not found handling
+        speech_application = self.__speech_application_repo.find_by_id(id)
+        return SpeechApplicationResponse(
+            id=speech_application._id,
+            title=speech_application.title,
+            description=speech_application.description,
+            speaker_name=speech_application.speaker_name,
+            speaker_discord_id=speech_application.speaker_discord_id,
+            event_start_time=speech_application.event_start_time.timestamp(),
+            duration_in_mins=speech_application.duration_in_mins,
+            application_review_status=speech_application.application_review_status,
+            apply_time=speech_application.apply_time.timestamp()
+        )
 
 
 __instance = None
