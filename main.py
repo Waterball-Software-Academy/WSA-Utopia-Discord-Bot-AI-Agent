@@ -1,4 +1,5 @@
 import asyncio
+from contextlib import asynccontextmanager
 
 import uvicorn
 from dotenv import load_dotenv
@@ -37,9 +38,16 @@ async def hello(ctx):
     await ctx.send('Hello, World!')
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    asyncio.create_task(start_discord_bot())
+    await google_calendar.connect_to_service()
+    yield
+
+
 middleware = [
 ]
-app = FastAPI(middleware=middleware)
+app = FastAPI(middleware=middleware, lifespan=lifespan)
 app.include_router(speech_router, prefix="/api/speeches")
 
 agent = create_workflow()
@@ -57,9 +65,7 @@ async def start_server():
 
 
 async def main():
-    await asyncio.gather(start_server(),
-                         start_discord_bot(),
-                         google_calendar.connect_to_service())
+    await start_server()
 
 
 if __name__ == "__main__":
