@@ -10,6 +10,11 @@ from speech.app.api.endpoints import router as speech_router
 from speech.app.services.discord.ReviewSpeechApplicationHandler import get_review_speech_application_handler
 from speech.app.services.discord.SpeechApplicationReviewResultHandler import \
     get_speech_application_review_result_handler
+from commons.speech_ai_agent.agent import create_workflow
+
+from langserve import add_routes
+
+
 
 load_dotenv()
 __discord_app, bot_token = discord_api.init_bot()
@@ -37,6 +42,8 @@ middleware = [
 app = FastAPI(middleware=middleware)
 app.include_router(speech_router, prefix="/api/speeches")
 
+agent = create_workflow()
+add_routes(app, agent, path='/api/speeching')
 
 async def start_discord_bot():
     await __discord_app.start(bot_token)
