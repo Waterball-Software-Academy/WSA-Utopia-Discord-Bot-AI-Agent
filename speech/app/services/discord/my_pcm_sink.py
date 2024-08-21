@@ -1,12 +1,13 @@
+import datetime
 import io
 import os
 
 from discord import VoiceClient
-from discord.sinks import Filters, default_filters, AudioData
+from discord.sinks import Filters, default_filters, AudioData, Sink
 from discord.types import snowflake
 
 
-class MyPcmSink(Filters):
+class MyPcmSink(Sink):
     """A sink "stores" recorded audio data.
 
     Can be subclassed for extra customizablilty.
@@ -45,7 +46,7 @@ class MyPcmSink(Filters):
 
     def init(self, vc):  # called under listen
         self.vc: VoiceClient = vc
-        super().init()
+        super().init(vc)
 
     @Filters.container
     def write(self, data, user):
@@ -55,6 +56,8 @@ class MyPcmSink(Filters):
 
         file = self.audio_data[user]
         file.write(data)
+
+        print(f'Time: {datetime.datetime.now()} -- size: {len(data)}')
 
     def cleanup(self):
         self.finished = True
