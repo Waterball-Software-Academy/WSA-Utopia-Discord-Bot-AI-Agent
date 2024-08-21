@@ -49,7 +49,7 @@ class SpeechApplicationReviewResultHandler:
         )
         if review_result.is_accepted():
             event = await self.__schedule_discord_event_for_speech(application)
-            mod_speech_application_review_channel = self.__wsa.get_channel(
+            mod_speech_application_review_channel = await self.__wsa.fetch_channel(
                 int(discord_api.mod_speech_application_review_channel_id))
             await mod_speech_application_review_channel.send(event.url)
             embed.title = "恭喜你！您的短講時間已經安排！一起享受費曼學習吧！"

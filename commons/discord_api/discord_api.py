@@ -29,8 +29,8 @@ def get_discord_app() -> discord.Bot:
 DiscordAppDependency = Depends(get_discord_app)
 
 
-def get_wsa_guild(discord_app: discord.Bot = DiscordAppDependency) -> discord.Guild:
-    wsa = discord_app.get_guild(int(guild_id))
+async def get_wsa_guild(discord_app: discord.Bot = DiscordAppDependency) -> discord.Guild:
+    wsa = await discord_app.fetch_guild(int(guild_id))
     return wsa
 
 
