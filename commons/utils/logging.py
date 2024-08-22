@@ -76,8 +76,7 @@ def get_logger(
     fmt = (
             fmt
             or "<green>{time:YYYY-MM-DD at HH:mm:ss}</green> | <level>{level: <8}</level> | trace_id=<cyan>{extra["
-               "trace_id]}</cyan> | user_id=<cyan>{extra[user_id]}</cyan> | conversation_id=<cyan>{extra[conversation_id]}</cyan> "
-               "| <cyan>{extra[name]}</cyan>:<cyan>{function}</cyan>:<cyan>{line}{extra[padding]}</cyan> - <level>{message}</level>\n{exception}"
+               "trace_id]}</cyan> | <cyan>{extra[name]}</cyan>:<cyan>{function}</cyan>:<cyan>{line}{extra[padding]}</cyan> - <level>{message}</level>\n{exception}"
     )
 
     # Remove default settings
