@@ -1,17 +1,19 @@
 from datetime import datetime
-from typing import Optional
 
 import discord
 from fastapi import Depends
 from pydantic import BaseModel
 
 import commons.discord_api.discord_api as discord_api
+from commons.utils.logging import get_logger
 from speech.app.data.speech_repo import Dependency as SpeechRepoDependency, SpeechApplicationRepository
 from speech.app.entities.speech_application import SpeechApplication
 from speech.app.services.basic_openai_agent import OpenAIModelClient, OpenAIClientDependency
 from speech.app.services.discord.ReviewSpeechApplicationHandler import \
     Dependency as ReviewSpeechApplicationHandlerDependency, \
     ReviewSpeechApplicationHandler
+
+logger = get_logger("speech_service", diagnose=True)
 
 
 class PrefilledSpeechApplication(BaseModel):
@@ -25,6 +27,7 @@ class SpeechApplicationRequest(BaseModel):
     description: str
     speaker_name: str
     event_start_time: datetime
+    event_end_time: datetime
     duration_in_mins: int
     cal_booking_id: int
     cal_booking_uid: str
@@ -32,17 +35,20 @@ class SpeechApplicationRequest(BaseModel):
     speaker_discord_id: str
     speaker_attendee_email: str
 
-
-class SpeechApplicationResponse(BaseModel):
-    id: str
-    title: str
-    description: str
-    speaker_name: str
-    speaker_discord_id: str
-    event_start_time: float
-    duration_in_mins: int
-    application_review_status: str
-    apply_time: float
+    def to_entity(self):
+        return SpeechApplication(
+            _id=self.cal_booking_uid,
+            title=self.title,
+            description=self.description,
+            speaker_name=self.speaker_name,
+            event_start_time=self.event_start_time,
+            event_end_time=self.event_end_time,
+            duration_in_mins=self.duration_in_mins,
+            cal_booking_id=self.cal_booking_id,
+            cal_booking_uid=self.cal_booking_uid,
+            cal_location=self.cal_location,
+            speaker_discord_id=self.speaker_discord_id,
+            speaker_attendee_email=self.speaker_attendee_email)
 
 
 class SpeechService:
@@ -69,40 +75,17 @@ class SpeechService:
         return PrefilledSpeechApplication(title=event_info.title, description=event_info.description,
                                           speaker_name=speaker_name)
 
-    async def apply_speech(self, request: SpeechApplicationRequest):
-        # TODO: validation?
-        application = SpeechApplication(request.title, request.speaker_discord_id,
-                                        request.speaker_name, request.description, request.event_start_time,
-                                        request.duration_in_mins)
+    async def apply_speech(self, request: SpeechApplicationRequest) -> dict:
+        logger.info(f'[Apply speech] {{"id": "{request.cal_booking_id}", "title": "{request.title}""}}')
+        application = request.to_entity()
         saved = self.__speech_application_repo.save(application)
         await self.__review_speech_application_handler.review(application)
-        return SpeechApplicationResponse(
-            id=saved._id,
-            title=saved.title,
-            description=saved.description,
-            speaker_name=saved.speaker_name,
-            speaker_discord_id=saved.speaker_discord_id,
-            event_start_time=saved.event_start_time.timestamp(),
-            duration_in_mins=saved.duration_in_mins,
-            application_review_status=saved.application_review_status,
-            apply_time=saved.apply_time.timestamp()
+        return saved.to_dict()
 
-        )
-
-    async def find_speech_application(self, id: str) -> SpeechApplication:
+    async def find_speech_application(self, id: str) -> dict:
         # TODO: not found handling
         speech_application = self.__speech_application_repo.find_by_id(id)
-        return SpeechApplicationResponse(
-            id=speech_application._id,
-            title=speech_application.title,
-            description=speech_application.description,
-            speaker_name=speech_application.speaker_name,
-            speaker_discord_id=speech_application.speaker_discord_id,
-            event_start_time=speech_application.event_start_time.timestamp(),
-            duration_in_mins=speech_application.duration_in_mins,
-            application_review_status=speech_application.application_review_status,
-            apply_time=speech_application.apply_time.timestamp()
-        )
+        return speech_application.to_dict()
 
 
 __instance = None

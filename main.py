@@ -4,9 +4,11 @@ from contextlib import asynccontextmanager
 import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI
+from fastapi.middleware import Middleware
 from langserve import add_routes
 
 import commons.discord_api.discord_api as discord_api
+from commons.fastapi.middlewares import TraceIdToLoggerMiddleware
 from commons.google.calendar import google_calendar
 from commons.speech_ai_agent.agent import create_workflow
 from speech.app.api.endpoints import router as speech_router
@@ -40,12 +42,14 @@ async def lifespan(app: FastAPI):
 
 
 middleware = [
+    Middleware(TraceIdToLoggerMiddleware)
 ]
 app = FastAPI(middleware=middleware, lifespan=lifespan)
 app.include_router(speech_router, prefix="/api/speeches")
 
 agent = create_workflow()
 add_routes(app, agent, path='/api/speeching')
+
 
 async def start_discord_bot():
     await __discord_app.start(bot_token)

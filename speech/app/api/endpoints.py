@@ -1,10 +1,14 @@
+import json
 
 from fastapi import APIRouter
 
+from commons.utils.logging import get_logger
 from speech.app.services.speech_service import Dependency as SpeechServiceDependency
 from speech.app.services.speech_service import SpeechService, PrefilledSpeechApplication, SpeechApplicationRequest
 
 router = APIRouter()
+
+logger = get_logger("Speech's Endpoints", diagnose=True)
 
 
 @router.get("/applications", response_model=PrefilledSpeechApplication)
@@ -46,3 +50,18 @@ async def webhook_from_cal_com(body: dict, speech_service: SpeechService = Speec
         speaker_discord_id=responses.get('speakerDiscordId', {}).get('value'), )
 
     await speech_service.apply_speech(request)
+
+    logger.info("[cal.com Webhook (BOOKING_CREATED)] "
+                f'{{"title": "{request.title}", '
+                f'"description": "{request.description}", '
+                f'"speaker_name": "{request.speaker_name}", '
+                f'"event_start_time": "{request.event_start_time.isoformat()}", '
+                f'"event_end_time": "{request.event_end_time.isoformat()}", '
+                f'"duration_in_mins": {request.duration_in_mins}, '
+                f'"cal_booking_id": {request.cal_booking_id}, '
+                f'"cal_booking_uid": "{request.cal_booking_uid}", '
+                f'"cal_location": "{request.cal_location}", '
+                f'"speaker_discord_id": "{request.speaker_discord_id}", '
+                f'"speaker_attendee_email": "{request.speaker_attendee_email}"'
+                f'}}'
+                )

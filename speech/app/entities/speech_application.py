@@ -12,53 +12,73 @@ class ApplicationReviewStatus(Enum):
 
 
 class SpeechApplication:
-    def __init__(self, title: str,
-                 speaker_discord_id: str, speaker_name: str,
+    def __init__(self, _id: str,
+                 title: str,
                  description: str,
+                 speaker_name: str,
                  event_start_time: datetime,
+                 event_end_time: datetime,
                  duration_in_mins: int,
-                 _id: Optional[str] = None,
+                 cal_booking_id: int,
+                 cal_booking_uid: str,
+                 cal_location: str,
+                 speaker_discord_id: str,
+                 speaker_attendee_email: str,
                  application_review_status=ApplicationReviewStatus.PENDING,
                  apply_time=datetime.now(),
                  deny_reason: Optional[str] = None):
-        self._id = _id
-        self.speaker_discord_id = speaker_discord_id
-        self.speaker_name = speaker_name
+        self._id = str(_id)
         self.title = title
         self.description = description
+        self.speaker_name = speaker_name
         self.event_start_time = event_start_time
+        self.event_end_time = event_end_time
         self.duration_in_mins = duration_in_mins
+        self.cal_booking_id = cal_booking_id
+        self.cal_booking_uid = cal_booking_uid
+        self.cal_location = cal_location
+        self.speaker_discord_id = speaker_discord_id
+        self.speaker_attendee_email = speaker_attendee_email
         self.application_review_status = application_review_status
-        self.deny_reason = deny_reason
         self.apply_time = apply_time
+        self.deny_reason = deny_reason
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         return {
             "_id": self._id,
             "title": self.title,
             "description": self.description,
-            "speaker_discord_id": self.speaker_discord_id,
             "speaker_name": self.speaker_name,
-            "event_start_time": self.event_start_time.isoformat() if isinstance(self.event_start_time,
-                                                                                datetime) else self.event_start_time,
+            "event_start_time": self.event_start_time.isoformat() if self.event_start_time else None,
+            "event_end_time": self.event_end_time.isoformat() if self.event_end_time else None,
             "duration_in_mins": self.duration_in_mins,
-            "application_review_status": self.application_review_status.name,
-            "deny_reason": self.deny_reason,
-            "apply_time": self.apply_time.isoformat() if isinstance(self.apply_time, datetime) else self.apply_time
+            "cal_booking_id": self.cal_booking_id,
+            "cal_booking_uid": self.cal_booking_uid,
+            "cal_location": self.cal_location,
+            "speaker_discord_id": self.speaker_discord_id,
+            "speaker_attendee_email": self.speaker_attendee_email,
+            "application_review_status": self.application_review_status.name if self.application_review_status else None,
+            "apply_time": self.apply_time.isoformat() if self.apply_time else None,
+            "deny_reason": self.deny_reason
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]):
+    def from_dict(cls, data: dict):
         return cls(
-            title=data.get("title"),
-            speaker_discord_id=data.get("speaker_discord_id"),
-            speaker_name=data.get("speaker_name"),
-            description=data.get("description"),
-            event_start_time=datetime.fromisoformat(data.get("event_start_time")) if data.get(
-                "event_start_time") else None,
-            duration_in_mins=data.get("duration_in_mins"),
-            _id=data.get("_id"),
-            application_review_status=data.get("application_review_status", ApplicationReviewStatus.PENDING),
-            deny_reason=data.get("deny_reason"),
-            apply_time=datetime.fromisoformat(data.get("apply_time")) if data.get("apply_time") else None
+            _id=data["_id"],
+            title=data["title"],
+            description=data["description"],
+            speaker_name=data["speaker_name"],
+            event_start_time=datetime.fromisoformat(data["event_start_time"]) if data.get("event_start_time") else None,
+            event_end_time=datetime.fromisoformat(data["event_end_time"]) if data.get("event_end_time") else None,
+            duration_in_mins=data["duration_in_mins"],
+            cal_booking_id=data["cal_booking_id"],
+            cal_booking_uid=data["cal_booking_uid"],
+            cal_location=data["cal_location"],
+            speaker_discord_id=data["speaker_discord_id"],
+            speaker_attendee_email=data["speaker_attendee_email"],
+            application_review_status=ApplicationReviewStatus[data["application_review_status"]] if data.get(
+                "application_review_status") else ApplicationReviewStatus.PENDING,
+            apply_time=datetime.fromisoformat(data["apply_time"]) if data.get("apply_time") else datetime.now(),
+            deny_reason=data.get("deny_reason")
         )
