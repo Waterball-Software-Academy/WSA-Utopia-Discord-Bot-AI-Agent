@@ -24,6 +24,5 @@ class TraceIdToLoggerMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request, call_next):
         trace_id = generate_trace_id()
         with self.logger.contextualize(trace_id=trace_id):
-            # Add the trace id to the request headers
             response = await call_next(request)
             return response
