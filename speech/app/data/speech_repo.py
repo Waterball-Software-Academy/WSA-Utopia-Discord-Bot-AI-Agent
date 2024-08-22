@@ -4,7 +4,7 @@ from fastapi import Depends
 from pymongo.database import Database
 
 from commons.errors import NotFoundException
-from commons.mongo.pymongo_get_database import MongoDatabaseDependency
+from commons.mongo.pymongo_get_database import MongoDatabaseDependency, get_mongo_database_instance
 from commons.utils.logging import get_logger
 from speech.app.entities.speech_application import SpeechApplication, ApplicationReviewStatus
 
@@ -52,7 +52,7 @@ class SpeechApplicationRepository:
         return SpeechApplication.from_dict(data)
 
     def delete_by_id(self, speech_id: str):
-        pass
+        self.applications.delete_one({"_id": speech_id})
 
 
 def init_speech_application_repository(db=MongoDatabaseDependency):
@@ -60,3 +60,10 @@ def init_speech_application_repository(db=MongoDatabaseDependency):
 
 
 Dependency = Depends(init_speech_application_repository)
+
+if __name__ == '__main__':
+    # Script for test
+    db = get_mongo_database_instance()
+    repo = SpeechApplicationRepository(db)
+
+    repo.delete_by_id('2XTAXWu5hrU7KPZBpNo7F8')
