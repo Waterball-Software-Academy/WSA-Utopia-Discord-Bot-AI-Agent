@@ -21,13 +21,11 @@ class SpeechApplication:
                  duration_in_mins: int,
                  cal_booking_id: int,
                  cal_booking_uid: str,
-                 cal_location: str,
                  speaker_discord_id: str,
                  speaker_attendee_email: str,
                  application_review_status=ApplicationReviewStatus.PENDING,
                  apply_time=datetime.now(),
                  deny_reason: Optional[str] = None,
-                 google_calendar_pending_event_id: Optional[str] = None,
                  google_calendar_official_event_id: Optional[str] = None):
         self._id = str(_id)
         self.title = title
@@ -38,13 +36,11 @@ class SpeechApplication:
         self.duration_in_mins = duration_in_mins
         self.cal_booking_id = cal_booking_id
         self.cal_booking_uid = cal_booking_uid
-        self.cal_location = cal_location
         self.speaker_discord_id = speaker_discord_id
         self.speaker_attendee_email = speaker_attendee_email
         self.application_review_status = application_review_status
         self.apply_time = apply_time
         self.deny_reason = deny_reason
-        self.google_calendar_pending_event_id = google_calendar_pending_event_id
         self.google_calendar_official_event_id = google_calendar_official_event_id
 
     def to_dict(self) -> dict:
@@ -58,12 +54,12 @@ class SpeechApplication:
             "duration_in_mins": self.duration_in_mins,
             "cal_booking_id": self.cal_booking_id,
             "cal_booking_uid": self.cal_booking_uid,
-            "cal_location": self.cal_location,
             "speaker_discord_id": self.speaker_discord_id,
             "speaker_attendee_email": self.speaker_attendee_email,
             "application_review_status": self.application_review_status.name,
             "apply_time": self.apply_time.isoformat() if self.apply_time else None,
-            "deny_reason": self.deny_reason
+            "deny_reason": self.deny_reason,
+            "google_calendar_official_event_id": self.google_calendar_official_event_id
         }
 
     @classmethod
@@ -78,11 +74,11 @@ class SpeechApplication:
             duration_in_mins=data["duration_in_mins"],
             cal_booking_id=data["cal_booking_id"],
             cal_booking_uid=data["cal_booking_uid"],
-            cal_location=data["cal_location"],
             speaker_discord_id=data["speaker_discord_id"],
             speaker_attendee_email=data["speaker_attendee_email"],
             application_review_status=ApplicationReviewStatus[data["application_review_status"]] if data.get(
                 "application_review_status") else ApplicationReviewStatus.PENDING,
             apply_time=datetime.fromisoformat(data["apply_time"]) if data.get("apply_time") else datetime.now(),
-            deny_reason=data.get("deny_reason")
+            deny_reason=data.get("deny_reason"),
+            google_calendar_official_event_id=data.get("google_calendar_official_event_id"),
         )

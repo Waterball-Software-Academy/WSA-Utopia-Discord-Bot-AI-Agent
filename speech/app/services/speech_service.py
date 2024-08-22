@@ -46,7 +46,6 @@ class SpeechApplicationRequest(BaseModel):
             duration_in_mins=self.duration_in_mins,
             cal_booking_id=self.cal_booking_id,
             cal_booking_uid=self.cal_booking_uid,
-            cal_location=self.cal_location,
             speaker_discord_id=self.speaker_discord_id,
             speaker_attendee_email=self.speaker_attendee_email)
 

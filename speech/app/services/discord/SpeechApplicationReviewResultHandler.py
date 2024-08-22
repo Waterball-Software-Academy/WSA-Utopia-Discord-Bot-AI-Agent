@@ -99,8 +99,10 @@ class SpeechApplicationReviewResultHandler:
 
     async def schedule_event_to_all_channels(self, application: SpeechApplication, event: ScheduledEvent):
         await self.__schedule_event_on_wsa_official_google_calendar(application, event)
+        # TODO: send notification via LINE OA
 
-    async def __schedule_event_on_wsa_official_google_calendar(self, application: SpeechApplication, event: ScheduledEvent):
+    async def __schedule_event_on_wsa_official_google_calendar(self, application: SpeechApplication,
+                                                               event: ScheduledEvent):
         new_event = {
             'summary': f'{application.title} - By {application.speaker_name}',
             'location': f'{event.url}',
@@ -121,15 +123,19 @@ class SpeechApplicationReviewResultHandler:
         # Insert the event into the calendar
         calendar_id = WSA_OFFICIAL_CALENDAR_ID
         event_result = self.__google_calendar.events().insert(calendarId=calendar_id, body=new_event).execute()
+        event_id = event_result.get('id')
         if event_result["status"] != 'confirmed':
             print("[Failed] can't create event on google calendar ")
+
+        self.__speech_repo.update_speech_application(application._id,
+                                                     {"google_calendar_official_event_id": event_id})
 
     async def __handle_denied_speech_application(self, mod_review_interaction: discord.Interaction,
                                                  application: SpeechApplication,
                                                  dc_speaker: discord.User,
                                                  embed_template: discord.Embed):
         # 1. Delete the event from WSA's official calendar
-        self.__google_calendar.events().delete(calendarId=WSA_OFFICIAL_CALENDAR_ID,)
+        self.__google_calendar.events().delete(calendarId=WSA_OFFICIAL_CALENDAR_ID, )
         # 2. hard delete the speech application from the database
         self.__speech_repo.delete_by_id(application._id)
         embed_template.title = "抱歉，您的活動申請沒有通過審查，請再提交一次"

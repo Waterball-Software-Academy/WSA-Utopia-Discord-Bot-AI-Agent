@@ -21,8 +21,7 @@ class SpeechApplicationRepository:
             {"$set": application.to_dict()}, upsert=True)
 
         logger.info(
-            f'[Saved SpeechApplication] '
-            f'{{"upserted_id":"{result.upserted_id}", "modified":"{result.modified_count}"}}')
+            f'[Saved SpeechApplication] {{"id":"{application._id}"}}')
         return application
 
     def update_speech_application_review_status(self, speech_id: str,
@@ -43,7 +42,7 @@ class SpeechApplicationRepository:
 
         logger.info(
             f'[Updated SpeechApplication] '
-            f'{{"upserted_id":"{result.upserted_id}", "modified":"{result.modified_count}", ' +
+            f'{{"matched_count":"{result.matched_count}", "modified":"{result.modified_count}", ' +
             ', '.join([f'"{key}":"{value}"' if isinstance(value, str)
                        else f'"{key}":{value}' for key, value in update_dict.items()]) + '}}')
 
@@ -51,6 +50,9 @@ class SpeechApplicationRepository:
         speech_application = SpeechApplication.from_dict(self.applications.find_one({"_id": speech_id}))
         speech_application._id = str(speech_application._id)  # Set _id to prevent json serialization issues
         return speech_application
+
+    def delete_by_id(self, speech_id: str):
+        pass
 
 
 def init_speech_application_repository(db=MongoDatabaseDependency):
