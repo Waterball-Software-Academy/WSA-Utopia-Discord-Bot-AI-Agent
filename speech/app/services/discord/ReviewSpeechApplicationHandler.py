@@ -35,7 +35,7 @@ async def _handle_application_review_result(review_result_handler: SpeechApplica
     await interaction.respond(response_message, ephemeral=True)
 
     # 2. issue review result
-    await review_result_handler.handle(speech_id, speaker_id, review_result)
+    await review_result_handler.handle(interaction, speech_id, speaker_id, review_result)
 
 
 class DenyReasonModal(discord.ui.Modal):
@@ -59,8 +59,8 @@ class DenyReasonModal(discord.ui.Modal):
                                                                                          deny_reason)
             await _handle_application_review_result(self.__review_result_handler, self.__embed, interaction,
                                                     self.__speaker_id, self.__speech_id,
-                                                    "🙅 短講申請審查（已拒絕審查）",
-                                                    f"✅ 短講申請 ({self.__speech_id}) 已被拒絕。",
+                                                    "🙅 活動申請審查（已拒絕審查）",
+                                                    f"✅ 活動申請 ({self.__speech_id}) 已被拒絕。",
                                                     review_result=ApplicationReviewResult(
                                                         ApplicationReviewStatus.DENIED, deny_reason=deny_reason))
             print(f"Speech (id={self.__speech_id}) denied.")
@@ -88,8 +88,8 @@ class SpeechApplicationReviewView(discord.ui.View):
                                                                                          ApplicationReviewStatus.ACCEPTED)
             await _handle_application_review_result(self.__review_result_handler, self.__embed, interaction,
                                                     speaker_id, speech_id,
-                                                    "🙆 短講申請審查（已通過審查）",
-                                                    f"✅ 短講申請 ({speech_id}) 已通過審查。",
+                                                    "🙆 活動申請審查（已通過審查）",
+                                                    f"✅ 活動申請 ({speech_id}) 已通過審查。",
                                                     review_result=ApplicationReviewResult(
                                                         ApplicationReviewStatus.ACCEPTED))
             print(f"Speech (id={button.speech_id}) accepted.")
@@ -130,7 +130,7 @@ class ReviewSpeechApplicationHandler:
         # 2. ask the mods to review this application
         channel = await self.__discord_app.fetch_channel(discord_api.mod_speech_application_review_channel_id)
         embed = discord.Embed(
-            title="短講申請審查",
+            title="活動申請審查",
             description=f"""
 ## {application.title}
 

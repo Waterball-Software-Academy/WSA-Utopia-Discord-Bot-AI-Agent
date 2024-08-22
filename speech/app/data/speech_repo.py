@@ -30,7 +30,8 @@ class SpeechApplicationRepository:
                                                 deny_reason: Optional[str] = None):
         result = self.applications.update_one(
             {"_id": speech_id},
-            {"$set": {"application_review_status": str(new_status), "deny_reason": deny_reason}},
+            {"$set": {"application_review_status": new_status.name,
+                      "deny_reason": deny_reason}},
         )
 
         if result.modified_count == 0:

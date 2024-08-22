@@ -57,7 +57,7 @@ class SpeechApplication:
             "cal_location": self.cal_location,
             "speaker_discord_id": self.speaker_discord_id,
             "speaker_attendee_email": self.speaker_attendee_email,
-            "application_review_status": self.application_review_status.name if self.application_review_status else None,
+            "application_review_status": self.application_review_status.name,
             "apply_time": self.apply_time.isoformat() if self.apply_time else None,
             "deny_reason": self.deny_reason
         }
@@ -82,3 +82,5 @@ class SpeechApplication:
             apply_time=datetime.fromisoformat(data["apply_time"]) if data.get("apply_time") else datetime.now(),
             deny_reason=data.get("deny_reason")
         )
+
+
