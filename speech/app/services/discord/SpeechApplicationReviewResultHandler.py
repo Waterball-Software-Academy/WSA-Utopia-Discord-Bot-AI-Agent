@@ -9,7 +9,7 @@ from googleapiclient.discovery import build
 from commons.discord_api import discord_api
 from commons.errors import NotFoundException
 from commons.google.calendar.google_calendar import GoogleCalendarServiceDependency, \
-    WSA_CALENDAR_ID
+    WSA_PROD_CALENDAR_ID
 from speech.app.data.speech_repo import Dependency as SpeechRepoDependency, SpeechApplicationRepository
 from speech.app.entities.speech_application import SpeechApplication
 from speech.app.services.discord.utils import convert_to_minguo_format
@@ -102,7 +102,7 @@ class SpeechApplicationReviewResultHandler:
         }
 
         # Insert the event into the calendar
-        calendar_id = WSA_CALENDAR_ID
+        calendar_id = WSA_PROD_CALENDAR_ID
         event_result = self.__google_calendar.events().insert(calendarId=calendar_id, body=new_event).execute()
         if event_result["status"] != 'confirmed':
             print("[Failed] can't create event on google calendar ")

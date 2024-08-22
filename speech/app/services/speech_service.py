@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 
 import discord
 from fastapi import Depends
@@ -20,12 +21,16 @@ class PrefilledSpeechApplication(BaseModel):
 
 
 class SpeechApplicationRequest(BaseModel):
-    speaker_discord_id: str
     title: str
     description: str
     speaker_name: str
     event_start_time: datetime
     duration_in_mins: int
+    cal_booking_id: int
+    cal_booking_uid: str
+    cal_location: str
+    speaker_discord_id: str
+    speaker_attendee_email: str
 
 
 class SpeechApplicationResponse(BaseModel):
@@ -83,7 +88,7 @@ class SpeechService:
             apply_time=saved.apply_time.timestamp()
 
         )
-        
+
     async def find_speech_application(self, id: str) -> SpeechApplication:
         # TODO: not found handling
         speech_application = self.__speech_application_repo.find_by_id(id)
