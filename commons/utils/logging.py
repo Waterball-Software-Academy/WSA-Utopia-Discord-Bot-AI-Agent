@@ -1,7 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-
-"""
 
 __author__ = "Lauren (lauren@waterballsa.tw)"
 
@@ -18,18 +15,12 @@ class Formatter:
         self.padding = 0
         self.fmt = fmt
         self.trace_id = None
-        self.user_id = None
-        self.conversation_id = None
 
     def format(self, record):
         length = len("{extra[name]}:{function}:{line}" % {**record})
         self.padding = max(self.padding, length)
         record["extra"]["padding"] = " " * (self.padding - length)
         record["extra"]["trace_id"] = record["extra"]["trace_id"] if "trace_id" in record["extra"] else self.trace_id
-        record["extra"]["user_id"] = record["extra"]["user_id"] if "user_id" in record["extra"] else self.user_id
-        record["extra"]["conversation_id"] = (
-            record["extra"]["conversation_id"] if "conversation_id" in record["extra"] else self.conversation_id
-        )
         return self.fmt
 
 
