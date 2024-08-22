@@ -26,7 +26,9 @@ class SpeechApplication:
                  speaker_attendee_email: str,
                  application_review_status=ApplicationReviewStatus.PENDING,
                  apply_time=datetime.now(),
-                 deny_reason: Optional[str] = None):
+                 deny_reason: Optional[str] = None,
+                 google_calendar_pending_event_id: Optional[str] = None,
+                 google_calendar_official_event_id: Optional[str] = None):
         self._id = str(_id)
         self.title = title
         self.description = description
@@ -42,6 +44,8 @@ class SpeechApplication:
         self.application_review_status = application_review_status
         self.apply_time = apply_time
         self.deny_reason = deny_reason
+        self.google_calendar_pending_event_id = google_calendar_pending_event_id
+        self.google_calendar_official_event_id = google_calendar_official_event_id
 
     def to_dict(self) -> dict:
         return {
@@ -82,5 +86,3 @@ class SpeechApplication:
             apply_time=datetime.fromisoformat(data["apply_time"]) if data.get("apply_time") else datetime.now(),
             deny_reason=data.get("deny_reason")
         )
-
-

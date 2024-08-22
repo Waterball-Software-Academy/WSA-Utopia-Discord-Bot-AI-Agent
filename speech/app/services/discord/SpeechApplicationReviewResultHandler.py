@@ -9,7 +9,7 @@ from googleapiclient.discovery import build
 from commons.discord_api import discord_api
 from commons.errors import NotFoundException
 from commons.google.calendar.google_calendar import GoogleCalendarServiceDependency, \
-    WSA_PROD_CALENDAR_ID
+    WSA_OFFICIAL_CALENDAR_ID
 from speech.app.data.speech_repo import Dependency as SpeechRepoDependency, SpeechApplicationRepository
 from speech.app.entities.speech_application import SpeechApplication
 from speech.app.services.discord.utils import convert_to_minguo_format
@@ -50,11 +50,8 @@ class SpeechApplicationReviewResultHandler:
             await self.__handle_accepted_speech_application(mod_review_interaction, application, dc_speaker,
                                                             embed_template)
         else:
-            embed_template.title = "抱歉，您的活動申請沒有通過審查，請再提交一次"
-            embed_template.description = embed_template.description + (f'---\n拒絕原因：{application.deny_reason}\n'
-                                                                       f'### 請修改後再提交一次，非常感謝，若有疑問歡迎至社群中提問 🙏。')
-            embed_template.colour = discord.Colour.red()
-            await dc_speaker.send(embed=embed_template)
+            await self.__handle_denied_speech_application(mod_review_interaction, application, dc_speaker,
+                                                          embed_template)
 
     async def __fetch_entities(self, speech_id: str, speaker_id: str) -> [SpeechApplication, discord.User]:
         application = self.__speech_repo.find_by_id(speech_id)
@@ -101,9 +98,9 @@ class SpeechApplicationReviewResultHandler:
         return event
 
     async def schedule_event_to_all_channels(self, application: SpeechApplication, event: ScheduledEvent):
-        await self.__schedule_event_on_wsa_prod_google_calendar(application, event)
+        await self.__schedule_event_on_wsa_official_google_calendar(application, event)
 
-    async def __schedule_event_on_wsa_prod_google_calendar(self, application: SpeechApplication, event: ScheduledEvent):
+    async def __schedule_event_on_wsa_official_google_calendar(self, application: SpeechApplication, event: ScheduledEvent):
         new_event = {
             'summary': f'{application.title} - By {application.speaker_name}',
             'location': f'{event.url}',
@@ -122,10 +119,24 @@ class SpeechApplicationReviewResultHandler:
         }
 
         # Insert the event into the calendar
-        calendar_id = WSA_PROD_CALENDAR_ID
+        calendar_id = WSA_OFFICIAL_CALENDAR_ID
         event_result = self.__google_calendar.events().insert(calendarId=calendar_id, body=new_event).execute()
         if event_result["status"] != 'confirmed':
             print("[Failed] can't create event on google calendar ")
+
+    async def __handle_denied_speech_application(self, mod_review_interaction: discord.Interaction,
+                                                 application: SpeechApplication,
+                                                 dc_speaker: discord.User,
+                                                 embed_template: discord.Embed):
+        # 1. Delete the event from WSA's official calendar
+        self.__google_calendar.events().delete(calendarId=WSA_OFFICIAL_CALENDAR_ID,)
+        # 2. hard delete the speech application from the database
+        self.__speech_repo.delete_by_id(application._id)
+        embed_template.title = "抱歉，您的活動申請沒有通過審查，請再提交一次"
+        embed_template.description = embed_template.description + (f'---\n拒絕原因：{application.deny_reason}\n'
+                                                                   f'### 請修改後再提交一次，非常感謝，若有疑問歡迎至社群中提問 🙏。')
+        embed_template.colour = discord.Colour.red()
+        await dc_speaker.send(embed=embed_template)
 
 
 def get_speech_application_review_result_handler(discord_app: discord.Bot = discord_api.DiscordAppDependency,

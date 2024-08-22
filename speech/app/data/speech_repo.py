@@ -28,10 +28,14 @@ class SpeechApplicationRepository:
     def update_speech_application_review_status(self, speech_id: str,
                                                 new_status: ApplicationReviewStatus,
                                                 deny_reason: Optional[str] = None):
+        self.update_speech_application(speech_id, {"application_review_status": new_status.name,
+                                                   "deny_reason": deny_reason})
+
+    def update_speech_application(self, speech_id: str,
+                                  update_dict: dict[str, str | int | None]):
         result = self.applications.update_one(
             {"_id": speech_id},
-            {"$set": {"application_review_status": new_status.name,
-                      "deny_reason": deny_reason}},
+            {"$set": update_dict},
         )
 
         if result.modified_count == 0:
@@ -39,8 +43,9 @@ class SpeechApplicationRepository:
 
         logger.info(
             f'[Updated SpeechApplication] '
-            f'{{"upserted_id":"{result.upserted_id}", '
-            f'"modified":"{result.modified_count}", "new_status":"{new_status.name}"}}')
+            f'{{"upserted_id":"{result.upserted_id}", "modified":"{result.modified_count}", ' +
+            ', '.join([f'"{key}":"{value}"' if isinstance(value, str)
+                       else f'"{key}":{value}' for key, value in update_dict.items()]) + '}}')
 
     def find_by_id(self, speech_id: str) -> Optional[SpeechApplication]:
         speech_application = SpeechApplication.from_dict(self.applications.find_one({"_id": speech_id}))

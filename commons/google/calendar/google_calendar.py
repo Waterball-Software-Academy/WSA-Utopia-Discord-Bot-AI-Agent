@@ -17,7 +17,7 @@ SCOPES = ["https://www.googleapis.com/auth/calendar"]
 
 CREDENTIALS_FILE = "waterball-software-academy.google.credentials.json"
 
-WSA_PROD_CALENDAR_ID = os.getenv('WSA_PROD_CALENDAR_ID')
+WSA_OFFICIAL_CALENDAR_ID = os.getenv('WSA_OFFICIAL_CALENDAR_ID')
 
 __project_root = get_project_root()
 __target_credentials_path = os.path.join(__project_root, CREDENTIALS_FILE)
@@ -35,7 +35,7 @@ async def connect_to_service() -> build:
         google_calendar_service = build("calendar", "v3",
                                         credentials=service_account.Credentials.from_service_account_file(
                                             __target_credentials_path, scopes=SCOPES))
-        google_calendar_service.events().list(calendarId=WSA_PROD_CALENDAR_ID)
+        google_calendar_service.events().list(calendarId=WSA_OFFICIAL_CALENDAR_ID)
         return google_calendar_service
     except HttpError as error:
         print(f"An error occurred: {error}")
