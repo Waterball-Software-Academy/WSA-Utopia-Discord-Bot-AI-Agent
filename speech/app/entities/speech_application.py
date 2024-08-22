@@ -82,3 +82,7 @@ class SpeechApplication:
             deny_reason=data.get("deny_reason"),
             google_calendar_official_event_id=data.get("google_calendar_official_event_id"),
         )
+
+    @property
+    def id(self) -> str:
+        return self._id

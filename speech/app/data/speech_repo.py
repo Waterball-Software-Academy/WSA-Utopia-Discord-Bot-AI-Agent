@@ -17,11 +17,11 @@ class SpeechApplicationRepository:
 
     def save(self, application: SpeechApplication) -> SpeechApplication:
         result = self.applications.update_one(
-            {"_id": application._id},
+            {"_id": application.id},
             {"$set": application.to_dict()}, upsert=True)
 
         logger.info(
-            f'[Saved SpeechApplication] {{"id":"{application._id}"}}')
+            f'[Saved SpeechApplication] {{"id":"{application.id}"}}')
         return application
 
     def update_speech_application_review_status(self, speech_id: str,
@@ -47,9 +47,9 @@ class SpeechApplicationRepository:
                        else f'"{key}":{value}' for key, value in update_dict.items()]) + '}}')
 
     def find_by_id(self, speech_id: str) -> Optional[SpeechApplication]:
-        speech_application = SpeechApplication.from_dict(self.applications.find_one({"_id": speech_id}))
-        speech_application._id = str(speech_application._id)  # Set _id to prevent json serialization issues
-        return speech_application
+        data = self.applications.find_one({"_id": speech_id})
+        data["_id"] = str(data["_id"])  # Convert the ObjectId(_id) to string to prevent json serialization issues
+        return SpeechApplication.from_dict(data)
 
     def delete_by_id(self, speech_id: str):
         pass

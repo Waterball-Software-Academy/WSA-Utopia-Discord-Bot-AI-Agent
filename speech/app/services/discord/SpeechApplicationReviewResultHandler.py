@@ -23,7 +23,7 @@ async def _speech_application_template(application):
 
 {application.description}
 ---
-表單 ID：{application._id}
+表單 ID：{application.id}
 講者：<@{application.speaker_discord_id}>
 時間：{convert_to_minguo_format(application.event_start_time)}
 時長：{application.duration_in_mins // 60} 小時 {application.duration_in_mins % 60} 分鐘
@@ -127,7 +127,7 @@ class SpeechApplicationReviewResultHandler:
         if event_result["status"] != 'confirmed':
             print("[Failed] can't create event on google calendar ")
 
-        self.__speech_repo.update_speech_application(application._id,
+        self.__speech_repo.update_speech_application(application.id,
                                                      {"google_calendar_official_event_id": event_id})
 
     async def __handle_denied_speech_application(self, mod_review_interaction: discord.Interaction,
@@ -137,7 +137,7 @@ class SpeechApplicationReviewResultHandler:
         # 1. Delete the event from WSA's official calendar
         self.__google_calendar.events().delete(calendarId=WSA_OFFICIAL_CALENDAR_ID, )
         # 2. hard delete the speech application from the database
-        self.__speech_repo.delete_by_id(application._id)
+        self.__speech_repo.delete_by_id(application.id)
         embed_template.title = "抱歉，您的活動申請沒有通過審查，請再提交一次"
         embed_template.description = embed_template.description + (f'---\n拒絕原因：{application.deny_reason}\n'
                                                                    f'### 請修改後再提交一次，非常感謝，若有疑問歡迎至社群中提問 🙏。')

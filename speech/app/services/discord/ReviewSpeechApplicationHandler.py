@@ -136,7 +136,7 @@ class ReviewSpeechApplicationHandler:
 
 {application.description}
 ---
-表單 ID：{application._id}
+表單 ID：{application.id}
 講者：<@{application.speaker_discord_id}>
 時間：{convert_to_minguo_format(application.event_start_time)}
 時長：{application.duration_in_mins // 60} 小時 {application.duration_in_mins % 60} 分鐘
@@ -149,7 +149,7 @@ class ReviewSpeechApplicationHandler:
         # Carry relevant data so that when handling the button event later, you can identify the speech, speaker,
         # ... and so on.
         for item in view.children:
-            item.speech_id = application._id
+            item.speech_id = application.id
             item.speaker_id = application.speaker_discord_id
         await channel.send(embed=embed, view=view)
 
