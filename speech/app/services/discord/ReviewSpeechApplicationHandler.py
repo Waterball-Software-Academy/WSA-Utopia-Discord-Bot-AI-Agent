@@ -3,6 +3,8 @@ from typing import Optional
 
 import discord
 from fastapi import Depends
+
+from commons.utils.logging import get_logger
 from speech.app.services.discord.SpeechApplicationReviewResultHandler import \
     Dependency as SpeechApplicationReviewResultHandlerDependency, SpeechApplicationReviewResultHandler
 from commons.discord_api import discord_api
@@ -12,6 +14,8 @@ from speech.app.data.speech_repo import Dependency as SpeechRepoDependency
 from speech.app.entities.speech_application import SpeechApplication, ApplicationReviewStatus
 from speech.app.services.discord.utils import convert_to_minguo_format
 from speech.app.services.models import ApplicationReviewResult
+
+logger = get_logger("ReviewSpeechApplicationHandler", diagnose=True)
 
 
 async def _handle_application_review_result(review_result_handler: SpeechApplicationReviewResultHandler,
@@ -54,6 +58,9 @@ class DenyReasonModal(discord.ui.Modal):
     async def callback(self, interaction: discord.Interaction):
         deny_reason = self.input_field.value
         try:
+            logger.info(
+                f'[Application Denied] {{"speech_id": "{self.__speech_id}", "speaker_id": "{self.__speaker_id}", '
+                f'"deny_reason": "{deny_reason}"}}')
             self.__speech_application_repository.update_speech_application_review_status(self.__speech_id,
                                                                                          ApplicationReviewStatus.DENIED,
                                                                                          deny_reason)
@@ -63,9 +70,8 @@ class DenyReasonModal(discord.ui.Modal):
                                                     f"✅ 活動申請 ({self.__speech_id}) 已被拒絕。",
                                                     review_result=ApplicationReviewResult(
                                                         ApplicationReviewStatus.DENIED, deny_reason=deny_reason))
-            print(f"Speech (id={self.__speech_id}) denied.")
         except NotFoundException as e:
-            print(e)
+            logger.error(str(e))
             await interaction.respond(f"Error: {str(e)}", ephemeral=True)
 
 
@@ -82,30 +88,34 @@ class SpeechApplicationReviewView(discord.ui.View):
     async def accept_application(self, button: discord.ui.Button, interaction: discord.Interaction):
         speech_id = button.speech_id
         speaker_id = button.speaker_id
+        logger.info(f'[Application Accepted] {{"speech_id": "{speech_id}", "speaker_id": "{speaker_id}"}}')
 
         try:
             self.__speech_application_repository.update_speech_application_review_status(speech_id,
                                                                                          ApplicationReviewStatus.ACCEPTED)
+
             await _handle_application_review_result(self.__review_result_handler, self.__embed, interaction,
                                                     speaker_id, speech_id,
                                                     "🙆 活動申請審查（已通過審查）",
                                                     f"✅ 活動申請 ({speech_id}) 已通過審查。",
                                                     review_result=ApplicationReviewResult(
                                                         ApplicationReviewStatus.ACCEPTED))
-            print(f"Speech (id={button.speech_id}) accepted.")
         except NotFoundException as e:
-            print(e)
+            logger.error(str(e))
             await interaction.respond(f"Error: {str(e)}", ephemeral=True)
 
     @discord.ui.button(label="拒絕申請", style=discord.ButtonStyle.primary, emoji="🙅")
     async def deny_application(self, button: discord.ui.Button, interaction: discord.Interaction):
         speech_id = button.speech_id
         speaker_id = button.speaker_id
+        logger.debug(f'[Denying Application] {{"speech_id": "{speech_id}", "speaker_id": "{speaker_id}"}}')
+
         try:
             await interaction.response.send_modal(
                 DenyReasonModal(self.__review_result_handler, speech_id, speaker_id,
                                 self.__speech_application_repository,
                                 self.__embed))
+            logger.trace(f'Pop-up "DenyReasonModal" to the moderator via discord.')
         except NotFoundException as e:
             print(e)
             await interaction.respond(f"Error: {str(e)}", ephemeral=True)
@@ -126,6 +136,7 @@ class ReviewSpeechApplicationHandler:
         # 1. notify the speaker via DM
         dc_speaker = await self.__discord_app.fetch_user(int(application.speaker_discord_id))
         await dc_speaker.send("Hi 你的演講已經申請完畢囉")
+        logger.trace(f'Sent "apply successfully" notification to the speaker via discord.')
 
         # 2. ask the mods to review this application
         channel = await self.__discord_app.fetch_channel(discord_api.mod_speech_application_review_channel_id)
@@ -152,6 +163,7 @@ class ReviewSpeechApplicationHandler:
             item.speech_id = application.id
             item.speaker_id = application.speaker_discord_id
         await channel.send(embed=embed, view=view)
+        logger.trace(f'Sent "application form" in the mod review channel.')
 
 
 def get_review_speech_application_handler(

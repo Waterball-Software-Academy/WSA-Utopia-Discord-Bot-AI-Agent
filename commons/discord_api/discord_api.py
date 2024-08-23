@@ -1,4 +1,6 @@
+import asyncio
 import os
+from concurrent.futures import ThreadPoolExecutor
 
 import discord
 from discord.ext import commands
@@ -35,3 +37,24 @@ async def get_wsa_guild(discord_app: discord.Bot = DiscordAppDependency) -> disc
 
 
 WsaGuildDependency = Depends(get_wsa_guild)
+
+
+async def async_wrapper(func, *args):
+    loop = asyncio.get_running_loop()
+    with ThreadPoolExecutor() as executor:
+        return await loop.run_in_executor(executor, func, *args)
+
+
+async def main():
+    bot, token = init_bot()
+    asyncio.create_task(bot.start(token))
+    await asyncio.sleep(5)
+
+    # You can write Discord feature testing code here:
+    wsa = await get_wsa_guild(bot)
+    discord_event = await wsa.fetch_scheduled_event(1276190206999134301)
+    await discord_event.delete()
+
+
+if __name__ == '__main__':
+    asyncio.run(main())

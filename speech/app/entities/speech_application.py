@@ -25,7 +25,9 @@ class SpeechApplication:
                  speaker_attendee_email: str,
                  application_review_status=ApplicationReviewStatus.PENDING,
                  apply_time=datetime.now(),
+                 # Fields after accepted or denied
                  deny_reason: Optional[str] = None,
+                 discord_event_id: Optional[str] = None,
                  google_calendar_official_event_id: Optional[str] = None):
         self._id = str(_id)
         self.title = title
@@ -41,6 +43,7 @@ class SpeechApplication:
         self.application_review_status = application_review_status
         self.apply_time = apply_time
         self.deny_reason = deny_reason
+        self.discord_event_id = discord_event_id
         self.google_calendar_official_event_id = google_calendar_official_event_id
 
     def to_dict(self) -> dict:
@@ -59,6 +62,7 @@ class SpeechApplication:
             "application_review_status": self.application_review_status.name,
             "apply_time": self.apply_time.isoformat() if self.apply_time else None,
             "deny_reason": self.deny_reason,
+            "discord_event_id": self.discord_event_id,
             "google_calendar_official_event_id": self.google_calendar_official_event_id
         }
 
@@ -80,6 +84,7 @@ class SpeechApplication:
                 "application_review_status") else ApplicationReviewStatus.PENDING,
             apply_time=datetime.fromisoformat(data["apply_time"]) if data.get("apply_time") else datetime.now(),
             deny_reason=data.get("deny_reason"),
+            discord_event_id=data.get("discord_event_id"),
             google_calendar_official_event_id=data.get("google_calendar_official_event_id"),
         )
 

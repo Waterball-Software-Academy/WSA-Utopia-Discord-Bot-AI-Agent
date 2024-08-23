@@ -10,10 +10,13 @@ from commons.discord_api import discord_api
 from commons.errors import NotFoundException
 from commons.google.calendar.google_calendar import GoogleCalendarServiceDependency, \
     WSA_OFFICIAL_CALENDAR_ID
+from commons.utils import logging
 from speech.app.data.speech_repo import Dependency as SpeechRepoDependency, SpeechApplicationRepository
-from speech.app.entities.speech_application import SpeechApplication
+from speech.app.entities.speech_application import SpeechApplication, ApplicationReviewStatus
 from speech.app.services.discord.utils import convert_to_minguo_format
 from speech.app.services.models import ApplicationReviewResult
+
+logger = logging.get_logger(__name__, diagnose=True)
 
 
 async def _speech_application_template(application):
@@ -67,10 +70,9 @@ class SpeechApplicationReviewResultHandler:
                                                    embed: discord.Embed):
         # 1. schedule event via discord
         event = await self.__schedule_event_via_discord(application)
+        speech_update_dict = {"discord_event_id": str(event.id)}
 
         # 2. notify the event details to mod channel & speaker via discord
-        mod_speech_application_review_channel = await self.__wsa.fetch_channel(
-            int(discord_api.mod_speech_application_review_channel_id))
         original_response = await mod_review_interaction.original_response()
         await original_response.edit(f"{original_response.content}\n{event.url}")
 
@@ -84,7 +86,10 @@ class SpeechApplicationReviewResultHandler:
             f'活動連結：{event.url} ，記得提早 5 分鐘入場，我也會提早 5 分鐘入場來協助您處理逐字稿，並且我會全程擔任您的最佳聽眾喔！請自在分享 👌🏻👌🏻👌🏻')
 
         # 3. schedule event to all channels (google calendar, LINE OA...)
-        await self.schedule_event_to_all_channels(application, event)
+        speech_update_dict |= await self.schedule_event_to_all_channels(application, event)
+
+        # 4. update the application with various event ids (e.g., discord event's id, google calendar event's id etc.)
+        self.__speech_repo.update_speech_application(application.id, speech_update_dict)
 
     async def __schedule_event_via_discord(self, application: SpeechApplication) -> ScheduledEvent:
         speech_channel = await self.__wsa.fetch_channel(int(discord_api.speech_voice_channel_id))
@@ -95,14 +100,16 @@ class SpeechApplicationReviewResultHandler:
             end_time=application.event_start_time + datetime.timedelta(minutes=application.duration_in_mins),
             location=speech_channel
         )
+        logger.debug(f'[Scheduled event via discord] {{"event_id":"{event.id}"}}')
         return event
 
-    async def schedule_event_to_all_channels(self, application: SpeechApplication, event: ScheduledEvent):
-        await self.__schedule_event_on_wsa_official_google_calendar(application, event)
+    async def schedule_event_to_all_channels(self, application: SpeechApplication, event: ScheduledEvent) -> dict:
+
+        return await self.__schedule_event_on_wsa_official_google_calendar(application, event)
         # TODO: send notification via LINE OA
 
     async def __schedule_event_on_wsa_official_google_calendar(self, application: SpeechApplication,
-                                                               event: ScheduledEvent):
+                                                               event: ScheduledEvent) -> dict:
         new_event = {
             'summary': f'{application.title} - By {application.speaker_name}',
             'location': f'{event.url}',
@@ -126,23 +133,26 @@ class SpeechApplicationReviewResultHandler:
         event_id = event_result.get('id')
         if event_result["status"] != 'confirmed':
             print("[Failed] can't create event on google calendar ")
-
-        self.__speech_repo.update_speech_application(application.id,
-                                                     {"google_calendar_official_event_id": event_id})
+        logger.debug(
+            f'[Scheduled event to WSA Official Google Calendar] {{"event_id":"{event.id}", '
+            f'"calendar_id":"{calendar_id}"}}')
+        return {"google_calendar_official_event_id": event_id}
 
     async def __handle_denied_speech_application(self, mod_review_interaction: discord.Interaction,
                                                  application: SpeechApplication,
                                                  dc_speaker: discord.User,
                                                  embed_template: discord.Embed):
-        # 1. Delete the event from WSA's official calendar
-        self.__google_calendar.events().delete(calendarId=WSA_OFFICIAL_CALENDAR_ID, )
-        # 2. hard delete the speech application from the database
+        # 1. TODO Delete event from WSA's pending events google calendar
         self.__speech_repo.delete_by_id(application.id)
+        logger.trace("Deleted speech application from DB")
+
+        # 2. Notify the speaker
         embed_template.title = "抱歉，您的活動申請沒有通過審查，請再提交一次"
         embed_template.description = embed_template.description + (f'---\n拒絕原因：{application.deny_reason}\n'
                                                                    f'### 請修改後再提交一次，非常感謝，若有疑問歡迎至社群中提問 🙏。')
         embed_template.colour = discord.Colour.red()
         await dc_speaker.send(embed=embed_template)
+        logger.trace("Sent a defined notification to Speaker.")
 
 
 def get_speech_application_review_result_handler(discord_app: discord.Bot = discord_api.DiscordAppDependency,

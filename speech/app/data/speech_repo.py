@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Mapping, Iterable
 
 from fastapi import Depends
 from pymongo.database import Database
@@ -40,19 +40,23 @@ class SpeechApplicationRepository:
         if result.modified_count == 0:
             raise NotFoundException("Speech Application", speech_id)
 
-        logger.info(
+        logger.debug(
             f'[Updated SpeechApplication] '
             f'{{"matched_count":"{result.matched_count}", "modified":"{result.modified_count}", ' +
             ', '.join([f'"{key}":"{value}"' if isinstance(value, str)
                        else f'"{key}":{value}' for key, value in update_dict.items()]) + '}}')
 
     def find_by_id(self, speech_id: str) -> Optional[SpeechApplication]:
-        data = self.applications.find_one({"_id": speech_id})
-        data["_id"] = str(data["_id"])  # Convert the ObjectId(_id) to string to prevent json serialization issues
-        return SpeechApplication.from_dict(data)
+        data = self.applications.find_one({"_id": speech_id})  # type: Mapping
+        if data is None:
+            return None
+        return SpeechApplication.from_dict({**data,
+                                            # Convert the ObjectId(_id) to string to prevent json serialization issues
+                                            "_id": str(data["_id"])})
 
     def delete_by_id(self, speech_id: str):
         self.applications.delete_one({"_id": speech_id})
+        logger.debug(f'[Deleted Speech Application from DB] {{"id":"{speech_id}"}}')
 
 
 def init_speech_application_repository(db=MongoDatabaseDependency):
