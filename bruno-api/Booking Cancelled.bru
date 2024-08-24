@@ -1,0 +1,131 @@
+meta {
+  name: Booking Cancelled
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{BASE_URL}}/api/speeches/applications/webhook/cal.com
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "triggerEvent": "BOOKING_CANCELLED",
+    "createdAt": "2024-08-22T16:18:17.062Z",
+    "payload": {
+      "title": "水球軟體學院&#xff1a;技術分享申請完畢",
+      "length": 30,
+      "type": "水球軟體學院-上菜",
+      "description": "關於sadasd，我想分享一些我的經驗sdfdsf",
+      "customInputs": {},
+      "eventTypeId": 995889,
+      "userFieldsResponses": {
+        "speakerDiscordId": {
+          "label": "講者 Discord ID",
+          "value": "338198253952696321",
+          "isHidden": true
+        }
+      },
+      "responses": {
+        "title": {
+          "label": "標題",
+          "value": "sadasd",
+          "isHidden": false
+        },
+        "email": {
+          "label": "email_address",
+          "value": "johnny850807@gmail.com",
+          "isHidden": false
+        },
+        "name": {
+          "label": "your_name",
+          "value": "waterball.pan",
+          "isHidden": false
+        },
+        "location": {
+          "label": "location",
+          "value": {
+            "optionValue": "",
+            "value": "integrations:discord_video"
+          },
+          "isHidden": false
+        },
+        "notes": {
+          "label": "活動內容",
+          "value": "關於sadasd，我想分享一些我的經驗sdfdsf",
+          "isHidden": false
+        },
+        "guests": {
+          "label": "additional_guests",
+          "value": [],
+          "isHidden": false
+        },
+        "rescheduleReason": {
+          "label": "reason_for_reschedule",
+          "isHidden": true
+        },
+        "speakerDiscordId": {
+          "label": "講者 Discord ID",
+          "value": "338198253952696321",
+          "isHidden": true
+        }
+      },
+      "startTime": "2024-08-29T08:00:00Z",
+      "endTime": "2024-08-29T08:30:00Z",
+      "organizer": {
+        "id": 950364,
+        "username": "waterballsa.tw",
+        "email": "waterballsa.tw@gmail.com",
+        "name": "水球軟體學院",
+        "timeZone": "Asia/Taipei",
+        "timeFormat": "h:mma",
+        "language": {
+          "locale": "en"
+        },
+        "utcOffset": 480
+      },
+      "attendees": [
+        {
+          "name": "waterball.pan",
+          "email": "johnny850807@gmail.com",
+          "timeZone": "Asia/Taipei",
+          "language": {
+            "locale": "en"
+          },
+          "utcOffset": 480
+        }
+      ],
+      "uid": "3T7kU13wMrk2Di7h2KgpdR",
+      "bookingId": 2997744,
+      "location": "https://discord.gg/dR2GJuzx9w",
+      "destinationCalendar": [
+        {
+          "id": 313314,
+          "integration": "google_calendar",
+          "externalId": "26143fe0d2f8e3a8a8dc0d760befbaf3fd442c321b29f86d3acb1e575cda998f@group.calendar.google.com",
+          "primaryEmail": "waterballsa.tw@gmail.com",
+          "userId": null,
+          "eventTypeId": 995889,
+          "credentialId": 496749
+        }
+      ],
+      "cancellationReason": "這是取消原因",
+      "team": {
+        "name": "Nameless",
+        "members": []
+      },
+      "seatsPerTimeSlot": null,
+      "seatsShowAttendees": false,
+      "iCalUID": "349nsCpitZ21rHVN2rDGYJ@Cal.com",
+      "iCalSequence": 1,
+      "eventTitle": "水球軟體學院&#xff1a;短講上菜",
+      "eventDescription": null,
+      "requiresConfirmation": null,
+      "price": null,
+      "currency": "usd",
+      "status": "CANCELLED"
+    }
+  }
+}
