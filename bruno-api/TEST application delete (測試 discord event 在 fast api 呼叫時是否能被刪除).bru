@@ -1,0 +1,15 @@
+meta {
+  name: TEST application delete (測試 discord event 在 fast api 呼叫時是否能被刪除)
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{BASE_URL}}/api/speeches/applications/test-delete-discord-event?discord_event_id=1276821985472548885
+  body: none
+  auth: none
+}
+
+params:query {
+  discord_event_id: 1276821985472548885
+}
