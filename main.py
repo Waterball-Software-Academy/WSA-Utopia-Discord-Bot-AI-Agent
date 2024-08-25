@@ -1,4 +1,6 @@
 import asyncio
+import logging
+import threading
 from contextlib import asynccontextmanager
 
 import uvicorn
@@ -14,29 +16,11 @@ from commons.speech_ai_agent.agent import create_workflow
 from speech.app.api.endpoints import router as speech_router
 
 load_dotenv()
-__discord_app, bot_token = discord_api.init_bot()
-
-
-@__discord_app.event
-async def on_ready():
-    print(f'Logged in as {__discord_app.user.name}')
-    print(f'Bot ID: {__discord_app.user.id}')
-    print('------')
-
-
-@__discord_app.event
-async def on_message(message):
-    print(message)
-
-
-@__discord_app.command(name="hello")
-async def hello(ctx):
-    await ctx.send('Hello, World!')
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    asyncio.create_task(start_discord_bot())
+    # asyncio.create_task(start_discord_bot())
     await google_calendar.connect_to_service()
     yield
 
@@ -52,19 +36,30 @@ add_routes(app, agent, path='/api/speeching')
 
 
 async def start_discord_bot():
-    await __discord_app.start(bot_token)
+    _discord_app, bot_token = discord_api.init_bot()
+    loop = asyncio.get_event_loop()
+    print(f'Event loop started (start_discord_bot): LoopId={id(loop)}')
+    await _discord_app.start(bot_token)
     # TODO: add all pending views to persist their states, otherwise views don't work after the discord bot restarted
 
 
-async def start_server():
+async def start_fastapi_server():
+    loop = asyncio.get_event_loop()
+    print(f'Event loop started (start_fastapi_server): LoopId={id(loop)}')
     config = uvicorn.Config(app, host="127.0.0.1", port=8000, log_level="info")
     server = uvicorn.Server(config)
     await server.serve()
 
 
 async def main():
-    await start_server()
+    await asyncio.gather(start_discord_bot(), start_fastapi_server())
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    logging.basicConfig(level=logging.DEBUG)
+
+    child_thread = threading.Thread(target=asyncio.run, args=(start_fastapi_server(),))
+    child_thread.start()
+
+    asyncio.run(start_discord_bot())
+    child_thread.join()
