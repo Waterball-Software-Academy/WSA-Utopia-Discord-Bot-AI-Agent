@@ -1,12 +1,8 @@
-import asyncio
 from concurrent.futures import ThreadPoolExecutor
 
-import discord
 from fastapi import APIRouter
-from fastapi import BackgroundTasks
 
 from commons.discord_api import discord_api
-from commons.discord_api.discord_api import WsaGuildDependency
 from commons.utils.logging import get_logger
 from speech.app.services.speech_service import Dependency as SpeechServiceDependency
 from speech.app.services.speech_service import SpeechService, PrefilledSpeechApplication, SpeechApplicationRequest
@@ -50,8 +46,7 @@ executor = ThreadPoolExecutor()
 
 
 @router.post("/applications/webhook/cal.com")
-async def webhook_from_cal_com(body: dict, background_tasks: BackgroundTasks,
-                               speech_service: SpeechService = SpeechServiceDependency):
+async def webhook_from_cal_com(body: dict, speech_service: SpeechService = SpeechServiceDependency):
     event = body['triggerEvent']
     payload = body['payload']
     cal_booking_id = payload.get('bookingId')
