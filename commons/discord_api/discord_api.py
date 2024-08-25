@@ -63,8 +63,7 @@ WsaGuildDependency = Depends(get_wsa_guild)
 
 
 async def schedule_task(coro_func, *args, **kwargs):
-    loop = _discord_app_event_loop
-    loop.create_task(coro_func(*args, **kwargs))
+    _discord_app_event_loop.create_task(coro_func(*args, **kwargs))
 
 
 async def async_wrapper(func, *args):

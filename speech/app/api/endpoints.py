@@ -50,7 +50,8 @@ executor = ThreadPoolExecutor()
 
 
 @router.post("/applications/webhook/cal.com")
-async def webhook_from_cal_com(body: dict, speech_service: SpeechService = SpeechServiceDependency):
+async def webhook_from_cal_com(body: dict, background_tasks: BackgroundTasks,
+                               speech_service: SpeechService = SpeechServiceDependency):
     event = body['triggerEvent']
     payload = body['payload']
     cal_booking_id = payload.get('bookingId')
