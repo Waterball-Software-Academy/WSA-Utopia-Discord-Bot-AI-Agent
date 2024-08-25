@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime
 
 import discord
@@ -99,16 +100,8 @@ class SpeechService:
                      f'"google_calendar_official_event_id="{application.google_calendar_official_event_id}"}}')
         self.__speech_application_repo.delete_by_id(id)
         if application.application_review_status == ApplicationReviewStatus.ACCEPTED:
-            await self.__delete_discord_event(application)
-
-    async def _test_delete_discord_event_by_application_id(self, application_id: str) -> dict:
-        logger.info(f'[__test_delete_discord_event_by_application_id] {{"id": "{id}"}}')
-        application = self.__speech_application_repo.find_by_id(application_id)
-        logger.debug(f'Speech Application: {{"discord_event_id"="{application.discord_event_id}", '
-                     f'"google_calendar_official_event_id="{application.google_calendar_official_event_id}"}}')
-        # self.__speech_application_repo.delete_by_id(id)
-        if application.application_review_status == ApplicationReviewStatus.ACCEPTED:
-            await self.__delete_discord_event(application)
+            await asyncio.gather(self.__delete_discord_event(application),
+                                 self.__delete_event_from_wsa_official_google_calendar(application))
 
     async def __delete_discord_event(self, application: SpeechApplication):
         discord_event = await self.__wsa.fetch_scheduled_event(int(application.discord_event_id))
