@@ -65,6 +65,21 @@ WsaGuildDependency = Depends(get_wsa_guild)
 async def schedule_task(coro_func, *args, **kwargs):
     _discord_app_event_loop.create_task(coro_func(*args, **kwargs))
 
+async def execute_task_and_get_result(coro_func, *args, **kwargs):
+    future = asyncio.Future()
+
+    def callback(future_task):
+        if not future.done():  # 確保 future 尚未完成或被取消
+            try:
+                result = future_task.result()
+                future.set_result(result)
+            except Exception as e:
+                future.set_exception(e)
+
+    task = asyncio.run_coroutine_threadsafe(coro_func(*args, **kwargs), _discord_app_event_loop)
+    task.add_done_callback(callback)
+
+    return await future
 
 async def async_wrapper(func, *args):
     loop = asyncio.get_running_loop()

@@ -72,7 +72,7 @@ class SpeechService:
         return await self.__generate_prefilled_application(abstract, name)
 
     async def __get_speaker_name_from_discord_wsa(self, speaker_discord_id: int) -> str:
-        discord_user = await self.__wsa.fetch_member(speaker_discord_id)
+        discord_user = await discord_api.execute_task_and_get_result(self.__wsa.fetch_member, speaker_discord_id)
         return discord_user.display_name
 
     async def __generate_prefilled_application(self, abstract: str, speaker_name: str) -> PrefilledSpeechApplication:
