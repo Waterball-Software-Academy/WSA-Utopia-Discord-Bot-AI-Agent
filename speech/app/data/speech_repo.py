@@ -1,6 +1,7 @@
+from contextlib import asynccontextmanager
 from typing import Optional, Mapping, Iterable
 
-from fastapi import Depends
+from fastapi import Depends, FastAPI
 from pymongo.database import Database
 
 from commons.errors import NotFoundException
@@ -61,6 +62,11 @@ class SpeechApplicationRepository:
 
 def init_speech_application_repository(db=MongoDatabaseDependency):
     return SpeechApplicationRepository(db)
+
+
+async def fastapi_startup(app: FastAPI):
+    repo = init_speech_application_repository()
+    repo.data = 30
 
 
 Dependency = Depends(init_speech_application_repository)
